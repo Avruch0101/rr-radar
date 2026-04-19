@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -565,7 +566,7 @@ function buildPrompt(ag, mode, filter) {
   }[mode];
   const filterNote = {ongoing:'Return ongoing stories only.',complete:'Return completed stories only.',no_hiatus:'Exclude stories on hiatus.',all:''}[filter]||'';
   const exclude = HISTORY_TITLES.slice(0, 20).join(', ');
-  return `Find 10 Royal Road stories from your training knowledge that match this reader's taste.
+  return `Find 6 Royal Road stories from your training knowledge that match this reader's taste.
 
 GENRES: ${ag.map(g => genreDesc[g]||g).join('; ')}
 MODE: ${modeDesc}
@@ -574,9 +575,9 @@ TASTE: OP MC, dark/gritty, hard progression, anti-heroes. Avoid: harem, romance,
 EXCLUDE (already read): ${exclude}, and similar popular titles.
 
 Return ONLY a raw JSON array, no markdown, no backticks. Each item:
-{"title":"","author":"","id":0,"rating":0.0,"followers":0,"pages":0,"chapters":0,"status":"Ongoing","tags":[],"description":"","url":""}
+{"title":"","author":"","id":0,"rating":0.0,"followers":0,"chapters":0,"status":"Ongoing","tags":[],"description":"one sentence max","url":""}
 
-Real Royal Road stories only with accurate IDs from royalroad.com/fiction/ID/slug URLs.`;
+Keep descriptions to one short sentence. Return exactly 6 stories.
 }
 
 // ── Fetch ───────────────────────────────────────────────────────────
@@ -609,7 +610,7 @@ async function fetchStories() {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 5000,
+        max_tokens: 4000,
         
         system: 'You are a Royal Road story expert with deep knowledge of the platform catalog through 2025. Return ONLY a valid JSON array — no markdown, no backticks, no other text.',
         messages: [{ role: 'user', content: buildPrompt(ag, mode, filter) }]
@@ -632,7 +633,15 @@ async function fetchStories() {
       const arrMatch = clean.match(/\[[\s\S]*\]/);
       stories = JSON.parse(arrMatch ? arrMatch[0] : clean);
     } catch(e) {
-      throw new Error('JSON parse failed.\nRaw text:\n' + textBlocks.slice(0, 500));
+      // Fallback: extract any complete objects from truncated JSON
+      const objMatches = clean.match(/\{[^{}]*"title"[^{}]*\}/g);
+      if (objMatches && objMatches.length) {
+        stories = objMatches.map(o => { try { return JSON.parse(o); } catch(e) { return null; } }).filter(Boolean);
+        if (stories.length) { /* salvaged */ }
+        else throw new Error('JSON parse failed.\nRaw text:\n' + textBlocks.slice(0, 500));
+      } else {
+        throw new Error('JSON parse failed.\nRaw text:\n' + textBlocks.slice(0, 500));
+      }
     }
 
     if (!Array.isArray(stories) || !stories.length) throw new Error('Empty result:\n' + JSON.stringify(stories).slice(0,200));
