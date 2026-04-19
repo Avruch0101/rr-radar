@@ -587,7 +587,7 @@ EXCLUDE (reader has already read these, do not return them): ${topExclude}.
 Return ONLY a raw JSON array, no markdown, no backticks. Each item:
 {"title":"","author":"","id":0,"rating":0.0,"followers":0,"chapters":0,"status":"Ongoing","tags":[],"description":"one sentence max","url":""}
 
-Keep descriptions to one short sentence. Return exactly 6 stories.
+Keep descriptions to one short sentence. Return exactly 6 stories.`;
 }
 
 // ── Fetch ───────────────────────────────────────────────────────────
@@ -619,7 +619,7 @@ async function fetchStories() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4000,
         
         system: 'You are a Royal Road story expert with deep knowledge of the platform catalog through 2025. Return ONLY a valid JSON array — no markdown, no backticks, no other text.',
