@@ -447,7 +447,9 @@ const HISTORY_TITLES = [
   'Matter Destructor','Last Legend Reborn','Absolute Mastery','Forge of Destiny',
   'A Journey of Black and Red','Peculiar Soul','Vigor Mortis','Beneath the Dragoneye Moons',
   'Tutorial Is Too Hard','Worm','The Beginning After The End','The Primal Hunter',
-  'The Legend of Randidly Ghosthound','Loop Bound','Bloodline Sovereign','Second Life Ranker',
+  'The Legend of Randidly Ghosthound','Dungeon Crawler Carl','Salvos','Millennial Mage',
+  'Virtuous Sons','Orconomics','Super Supportive','Azarinth Healer','Loop Bound',
+  'Bloodline Sovereign','Second Life Ranker',
   'The Perfect Run','Bog Standard Isekai','Ceaseless Horizons','Virtuous Sons',
   'The Path of Ascension','Salvos','Millennial Mage','Orconomics'
 ];
@@ -565,14 +567,22 @@ function buildPrompt(ag, mode, filter) {
     completed:'completed stories with strong ratings and substantial page count'
   }[mode];
   const filterNote = {ongoing:'Return ongoing stories only.',complete:'Return completed stories only.',no_hiatus:'Exclude stories on hiatus.',all:''}[filter]||'';
-  const exclude = HISTORY_TITLES.slice(0, 20).join(', ');
+  const topExclude = [
+    'He Who Fights With Monsters','Dungeon Crawler Carl','The Primal Hunter','Defiance of the Fall',
+    'The Beginning After The End','Mother of Learning','The Legend of Randidly Ghosthound',
+    'Azarinth Healer','Super Supportive','Salvos','Worm','Shadow Slave','Mark of the Fool',
+    'The Path of Ascension','System Change','Delve','Forge of Destiny','Beneath the Dragoneye Moons',
+    'A Journey of Black and Red','Peculiar Soul','Virtuous Sons','Vigor Mortis','Path of the Berserker',
+    'Cataclysm Rising','All Jobs and Classes','Crimson Eternal','Sword Saint\'s Reincarnation',
+    'The Academy\'s Immortal Professor','The Greatest Archmage','Second Life Ranker'
+  ].join(', ');
   return `Find 6 Royal Road stories from your training knowledge that match this reader's taste.
 
 GENRES: ${ag.map(g => genreDesc[g]||g).join('; ')}
 MODE: ${modeDesc}
 ${filterNote}
 TASTE: OP MC, dark/gritty, hard progression, anti-heroes. Avoid: harem, romance, YA-soft, slice of life.
-EXCLUDE (already read): ${exclude}, and similar popular titles.
+EXCLUDE (reader has already read these, do not return them): ${topExclude}.
 
 Return ONLY a raw JSON array, no markdown, no backticks. Each item:
 {"title":"","author":"","id":0,"rating":0.0,"followers":0,"chapters":0,"status":"Ongoing","tags":[],"description":"one sentence max","url":""}
