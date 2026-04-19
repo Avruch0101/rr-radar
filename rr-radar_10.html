@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Road Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0d0b;
+    --bg2: #161310;
+    --bg3: #1e1a16;
+    --border: rgba(184,134,11,0.15);
+    --border2: rgba(184,134,11,0.3);
+    --gold: #b8860b;
+    --gold-light: #d4a52a;
+    --text: #e8e0d0;
+    --text2: #9a8f7e;
+    --text3: #5a5248;
+    --red: #8b2500;
+    --red-light: #c43a1a;
+    --info: #4a7fa5;
+    --info-bg: rgba(74,127,165,0.12);
+    --warn-bg: rgba(139,37,0,0.12);
+    --warn: #c43a1a;
+    --card-bg: #161310;
+    --match-border: #b8860b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* API Key Gate */
+  #key-gate {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .key-box {
+    max-width: 480px;
+    width: 100%;
+    border: 0.5px solid var(--border2);
+    border-radius: 12px;
+    padding: 2.5rem;
+    background: var(--bg2);
+  }
+  .key-box h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+  .key-box p { font-size: 14px; color: var(--text2); font-style: italic; margin-bottom: 1.5rem; line-height: 1.6; }
+  .key-box input {
+    width: 100%;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 10px;
+    outline: none;
+  }
+  .key-box input:focus { border-color: var(--gold); }
+  .key-box input::placeholder { color: var(--text3); }
+  .key-hint { font-size: 12px; color: var(--text3); margin-bottom: 1.5rem; }
+  .key-hint a { color: var(--gold); text-decoration: none; }
+  .key-hint a:hover { text-decoration: underline; }
+  .save-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  .save-row label { font-size: 13px; color: var(--text2); font-style: italic; }
+  .save-row input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--gold); cursor: pointer; }
+
+  /* Main App */
+  #app { display: none; }
+  .topbar {
+    border-bottom: 0.5px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar h1 { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 600; letter-spacing: 0.06em; }
+  .topbar .sub { font-size: 13px; color: var(--text2); font-style: italic; }
+  .key-reset { font-size: 11px; color: var(--text3); cursor: pointer; font-style: italic; border: none; background: none; font-family: 'Crimson Pro', serif; }
+  .key-reset:hover { color: var(--text2); }
+
+  .main { max-width: 860px; margin: 0 auto; padding: 2rem; }
+
+  /* Controls */
+  .controls { margin-bottom: 1.25rem; }
+  .pill-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+  .pill {
+    font-family: 'Crimson Pro', serif;
+    font-size: 13px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text2);
+    background: transparent;
+    font-style: italic;
+  }
+  .pill.active { border-color: var(--gold); color: var(--gold-light); background: rgba(184,134,11,0.08); }
+  .pill:hover { background: var(--bg3); }
+
+  .sort-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 1.25rem; }
+  .sort-row label { font-size: 13px; color: var(--text2); font-style: italic; }
+  select {
+    font-family: 'Crimson Pro', serif;
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--bg3);
+    color: var(--text);
+    border: 0.5px solid var(--border);
+    cursor: pointer;
+    outline: none;
+  }
+  select:focus { border-color: var(--gold); }
+
+  .fetch-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 7px 22px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .fetch-btn:hover { background: var(--bg3); border-color: var(--gold); color: var(--gold-light); }
+  .fetch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Exclusion panel */
+  .excl-panel {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 1rem;
+  }
+  .excl-hdr { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .excl-hdr .lbl { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.06em; color: var(--text2); }
+  .excl-body { display: none; margin-top: 10px; }
+  .excl-body.open { display: block; }
+  .excl-chips { display: flex; flex-wrap: wrap; gap: 5px; max-height: 130px; overflow-y: auto; margin-bottom: 8px; }
+  .chip {
+    font-size: 11px; padding: 2px 7px; border-radius: 3px;
+    background: var(--bg3); border: 0.5px solid var(--border);
+    color: var(--text2); display: flex; align-items: center; gap: 3px;
+  }
+  .chip .rm { cursor: pointer; color: var(--text3); font-size: 14px; line-height: 1; }
+  .chip .rm:hover { color: var(--red-light); }
+  .add-row { display: flex; gap: 6px; }
+  .add-row input {
+    flex: 1; font-family: 'Crimson Pro', serif; font-size: 13px;
+    padding: 5px 8px; border-radius: 6px;
+    border: 0.5px solid var(--border); background: var(--bg3); color: var(--text); outline: none;
+  }
+  .add-row input:focus { border-color: var(--gold); }
+  .add-row input::placeholder { color: var(--text3); font-style: italic; }
+  .add-btn {
+    font-family: 'Cinzel', serif; font-size: 11px; padding: 5px 12px;
+    border-radius: 6px; border: 0.5px solid var(--border);
+    background: transparent; color: var(--text2); cursor: pointer;
+  }
+  .add-btn:hover { background: var(--bg3); }
+
+  .toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem; }
+  .toggle-row label { font-size: 13px; color: var(--text2); font-style: italic; cursor: pointer; }
+  input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--gold); cursor: pointer; }
+
+  .status-bar { font-size: 12px; color: var(--text2); font-style: italic; margin-bottom: 0.75rem; min-height: 18px; }
+
+  .error-box {
+    background: rgba(139,37,0,0.12);
+    border: 0.5px solid rgba(196,58,26,0.35);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--red-light);
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 1rem;
+  }
+
+  /* Story cards */
+  .stories { display: flex; flex-direction: column; gap: 10px; }
+  .story-card {
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.15s;
+  }
+  .story-card:hover { border-color: var(--border2); }
+  .story-card.match { border-left: 2px solid var(--gold); }
+  .story-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 5px; }
+  .story-title { font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600; line-height: 1.4; flex: 1; }
+  .story-title a { color: var(--text); text-decoration: none; }
+  .story-title a:hover { color: var(--gold-light); }
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; font-weight: 500; }
+  .badge.hot { background: rgba(184,134,11,0.15); color: var(--gold-light); border: 0.5px solid rgba(184,134,11,0.35); }
+  .badge.warm { background: var(--bg3); color: var(--text3); border: 0.5px solid var(--border); }
+  .story-meta { font-size: 12px; color: var(--text2); margin-bottom: 6px; font-style: italic; }
+  .story-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .tag { font-size: 11px; padding: 2px 7px; border-radius: 3px; background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border); }
+  .tag.match { background: var(--info-bg); color: #7ab8d8; border-color: rgba(74,127,165,0.3); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); border-color: rgba(196,58,26,0.25); }
+  .story-desc { font-size: 13px; color: var(--text2); line-height: 1.65; font-style: italic; }
+  .stats-row { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--border); }
+  .stat { font-size: 12px; color: var(--text3); }
+  .stat span { color: var(--text); font-weight: 500; }
+  .momentum { font-size: 11px; color: var(--gold); font-style: italic; margin-top: 4px; }
+  .card-btn {
+    font-size: 11px; padding: 3px 10px; border-radius: 3px;
+    border: 0.5px solid var(--border); background: transparent;
+    color: var(--text3); cursor: pointer; font-family: 'Crimson Pro', serif;
+    font-style: italic; margin-top: 8px;
+  }
+  .card-btn:hover { background: var(--bg3); color: var(--text2); }
+
+  .empty { text-align: center; padding: 4rem 1rem; color: var(--text3); font-style: italic; }
+  .divider {
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em;
+    color: var(--text3); text-align: center; padding: 8px 0;
+    border-top: 0.5px solid var(--border); margin: 4px 0;
+  }
+
+  .loading-pulse { display: flex; flex-direction: column; gap: 10px; }
+  .pulse-card {
+    background: var(--bg3); border-radius: 10px; height: 130px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.7} }
+
+  .btn-primary {
+    font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.06em;
+    padding: 10px 28px; border-radius: 6px;
+    border: 0.5px solid var(--border2);
+    background: rgba(184,134,11,0.1); color: var(--gold-light);
+    cursor: pointer; transition: all 0.15s; width: 100%;
+  }
+  .btn-primary:hover { background: rgba(184,134,11,0.2); border-color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- API Key Gate -->
+<div id="key-gate">
+  <div class="key-box">
+    <h1>Royal Road Radar</h1>
+    <p>Paste your Anthropic API key to get started. The key stays in your browser and is never sent anywhere except api.anthropic.com.</p>
+    <p style="margin:0 0 1rem;font-size:13px;color:var(--text2);line-height:1.6;font-style:normal">Get a key at <a href="https://platform.claude.com/settings/keys" target="_blank" style="color:var(--gold)">platform.claude.com → Settings → API Keys</a>. Each search costs ~$0.01–0.02.</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-api03-…" autocomplete="off" onkeydown="if(event.key==='Enter')saveKey()"/>
+    <div class="key-hint">Get a key at <a href="https://platform.claude.com/settings/keys" target="_blank">platform.claude.com → Settings → API Keys</a>. Haiku is cheap — each search costs ~$0.002.</div>
+    <div class="save-row">
+      <input type="checkbox" id="save-key" checked/>
+      <label for="save-key">Save key in localStorage (this browser only)</label>
+    </div>
+    <button class="btn-primary" onclick="saveKey()">Enter the Radar</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app">
+  <div class="topbar">
+    <div style="display:flex;align-items:baseline;gap:1rem">
+      <h1>Royal Road Radar</h1>
+      <span class="sub">live · gritty OP MCs · no YA softness</span>
+    </div>
+    <button class="key-reset" onclick="resetKey()">⚙ change API key</button>
+  </div>
+
+  <div class="main">
+    <div class="controls">
+      <div class="pill-group" id="genre-pills">
+        <button class="pill active" data-genre="apocalypse">Apocalypse / System</button>
+        <button class="pill active" data-genre="cultivation">Cultivation / Xianxia</button>
+        <button class="pill active" data-genre="isekai">Isekai / Portal</button>
+        <button class="pill" data-genre="progression">Progression Fantasy</button>
+        <button class="pill" data-genre="dungeon">Dungeon Core</button>
+        <button class="pill" data-genre="litrpg">LitRPG</button>
+      </div>
+    </div>
+
+    <div class="sort-row">
+      <label>discover</label>
+      <select id="mode-select">
+        <option value="trending">trending now</option>
+        <option value="rising">rising stars</option>
+        <option value="new_high">new + highly rated</option>
+        <option value="hidden">hidden gems</option>
+        <option value="completed">completed gems</option>
+      </select>
+      <label>filter</label>
+      <select id="filter-select">
+        <option value="all">all stories</option>
+        <option value="ongoing">ongoing only</option>
+        <option value="complete">completed only</option>
+        <option value="no_hiatus">exclude hiatus</option>
+      </select>
+      <button class="fetch-btn" id="fetch-btn" onclick="fetchStories()">Search</button>
+    </div>
+
+    <div class="excl-panel">
+      <div class="excl-hdr" onclick="toggleExcl()">
+        <span class="lbl">Already Read / Following</span>
+        <span style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:12px;color:var(--text3);font-style:italic" id="excl-count"></span>
+          <span style="font-size:11px;color:var(--text3)" id="excl-tog">▼ show</span>
+        </span>
+      </div>
+      <div class="excl-body" id="excl-body">
+        <div style="font-size:12px;color:var(--text3);font-style:italic;margin:6px 0 8px">From your reading history. Click × to restore any title. "Not interested" on cards adds more.</div>
+        <div class="excl-chips" id="excl-chips"></div>
+        <div class="add-row">
+          <input type="text" id="excl-input" placeholder="add title to exclude…" onkeydown="if(event.key==='Enter')addExcl()"/>
+          <button class="add-btn" onclick="addExcl()">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <input type="checkbox" id="excl-on" checked/>
+      <label for="excl-on">hide already-read / following</label>
+    </div>
+
+    <div class="status-bar" id="status"></div>
+    <div id="error-area"></div>
+    <div class="stories" id="stories-container">
+      <div class="empty">Select genres and hit Search.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── API Key management ──────────────────────────────────────────────
+let API_KEY = '';
+
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val || !val.startsWith('sk-')) {
+    alert('That doesn\'t look like a valid Anthropic API key (should start with sk-).');
+    return;
+  }
+  API_KEY = val;
+  if (document.getElementById('save-key').checked) {
+    localStorage.setItem('rr_radar_key', val);
+  }
+  document.getElementById('key-gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+function resetKey() {
+  API_KEY = '';
+  localStorage.removeItem('rr_radar_key');
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('key-gate').style.display = 'flex';
+}
+
+// Auto-load saved key
+(function() {
+  const saved = localStorage.getItem('rr_radar_key');
+  if (saved && saved.startsWith('sk-ant')) {
+    API_KEY = saved;
+    document.getElementById('key-gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+})();
+
+// ── Taste profile ───────────────────────────────────────────────────
+const TASTE = {
+  prefer: ['apocalypse','system','cultivation','xianxia','isekai','portal fantasy','progression','overpowered','reincarnation','litrpg','grimdark','dark','anti-hero','strong lead','male lead'],
+  warn:   ['harem','romance','yuri','yaoi','gender bender','school life','slice of life','comedy','fluffy'],
+  penalize: ['young adult','soft','cozy'],
+  minRating: 3.6
+};
+const GENRE_TAGS = {
+  apocalypse: ['apocalypse','post-apocalyptic','system','system apocalypse'],
+  cultivation: ['cultivation','xianxia','wuxia','eastern fantasy','martial arts'],
+  isekai:      ['isekai','portal fantasy','reincarnation','transmigration'],
+  progression: ['progression','progression fantasy','power fantasy'],
+  dungeon:     ['dungeon','dungeon core','dungeon management'],
+  litrpg:      ['litrpg','gamelit','game elements','rpg']
+};
+
+// ── Reading history (128 titles from uploaded files + known reads) ──
+const HISTORY_TITLES = [
+  'Runeblade','The Last Heir','Rise of the Blood God','New Life as a Max Level Archmage',
+  '1% Lifesteal','System Reset','A Background Character\'s Fate','A Glitch in the System',
+  'A Relatively Powerful Mage','A Soldier\'s Life','Accidental Champion','Ajax\'s Ascension',
+  'All Jobs and Classes','Applied Cultivation','Arcanist In Another World','Azarinth Healer',
+  'Becoming the Dark Lord','Blood and Qi','Blood Reaper','Boundless Cultivation',
+  'Cataclysm Rising','Cosmic Ascension','Crimson Eternal','Dawn of the Density God',
+  'Death is a Suggestion','Defiance of the Fall','Delve','Depthless Hunger',
+  'Downtown Druid','Draconic Ascension','Dungeon Apocalypse','Dungeon Devotee',
+  'Dungeon Diver','Duskbound','Elysium\'s Multiverse','Eternus Online',
+  'He Who Fights With Monsters','Hell Difficulty Tutorial','Keiran','Laws of Desire',
+  'Loopbreaker','Mage Tank','Mana Devourer','Medicine and Poison',
+  'Mercenaries of the Apocalypses','Mists of Redemption','Mother of Learning',
+  'Nightmare Realm Summoner','Outrun','Overpowered and Underwhelmed',
+  'Overpowered Level 1 Mage','Overpowered Wizard','Path of Dragons','Path of the Berserker',
+  'Path of the Deathless','Prestige Grinding','Pretty Devil','Primal Wizardry',
+  'Prisoner of the System','Razors Edge','Re:Birth','Reader Mage','Reborn Healer',
+  'Reclaimer','Road to Mastery','Sanguine Prince','Savage Awakening',
+  'Silver Fox and the Western Hero','Skill Eater','Skill Hunter','Soul of the Warrior',
+  'Spell Weaver','Spirit Lock','Star Wars Rise of the Battlemage',
+  'Star Wars Reincarnation Story','Starbreaker','Starship Engineer','Storm\'s Apprentice',
+  'Sublight Drive','Super Supportive','Sword Saint\'s Reincarnation','System Change',
+  'The Academy\'s Immortal Professor','The Convergent Path','The First Archmage',
+  'The First Circle','The First Great Game','The Gearmonger Chronicles',
+  'The Ghost of the Wastes','The God Machine','The Gods\' Gacha Game',
+  'The Greatest Archmage','The Harvester','The Infinite Tower','The Last Orellen',
+  'The Legend of William Oh','The Lone Wanderer','The New World','The Overpowered Novice',
+  'The Path of Ascension','The Runesmith','The Silent Archmage','The Strongest Spellblade',
+  'The Stubborn Skill-Grinder','The Ultimate Passive Paradigm','The Warcrowned',
+  'Tower of Somnus','Twisted Destiny','Ultimate Level 1 LitRPG','Unchosen Champion',
+  'Unhinged Fury','Vae Victis','Vainglory','Value Loyalty Above All Else',
+  'Victor of Tucson','Wildcards','Will of The Force','You are Summoned',
+  'Return of the Martial Messiah','Return of the S-Rank Hunter','Return of the Unbound Mage',
+  'Rift-Runner Returns Home','Rise of the Living Forge','Respec On Death',
+  'Mark of the Fool','Shadow Slave','Path of Violence','Classless Outworlder',
+  'Matter Destructor','Last Legend Reborn','Absolute Mastery','Forge of Destiny',
+  'A Journey of Black and Red','Peculiar Soul','Vigor Mortis','Beneath the Dragoneye Moons',
+  'Tutorial Is Too Hard','Worm','The Beginning After The End','The Primal Hunter',
+  'The Legend of Randidly Ghosthound','Dungeon Crawler Carl','Salvos','Millennial Mage',
+  'Virtuous Sons','Orconomics','Super Supportive','Azarinth Healer','Loop Bound',
+  'Bloodline Sovereign','Second Life Ranker',
+  'The Perfect Run','Bog Standard Isekai','Ceaseless Horizons','Virtuous Sons',
+  'The Path of Ascension','Salvos','Millennial Mage','Orconomics'
+];
+const HISTORY_IDS = new Set(['94966','102913','89567','118891','72301','82352','76018','138059','80986','58243','87299','70004','51664','130987','97091','108300','16946','117332','65726','110972','101946','81317','93920','79141','67481','96817','24709','25225','72771','79173','83454','94278','51358','64223','97850','65145','109909','26294','64916','77820','83288','132460','76463','89231','103742','92934','30624','21220','103432','89034','79822','94978','153496','90220','77046','54944','122502','95231','114313','79092','122933','108724','103565','129589','134662','80076','74831','112301','102105','110896','136291','119140','79094','61041','146542','77550','25999','90062','85690','53219','95904','141169','73549','84749','89519','56950','85716','72498','63759','101789','35372','111253','155227','115376','15568','97177','70915','64006','144356','64505','120519','140784','40295','80114','46901','92144','95097','12024','133394','40920','33844','101411','131159','83294','95914','117689','36983','99966','76259','62573','90250','66318','92631','94965','52889','32659','67388','71172']);
+
+function norm(s){ return (s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+let exclTitles = new Set(HISTORY_TITLES.map(norm));
+let exclIds    = new Set([...HISTORY_IDS]);
+let exclDisplay = [...HISTORY_TITLES].sort((a,b) => a.localeCompare(b));
+
+function isExcluded(s) {
+  if (s.id && exclIds.has(String(s.id))) return true;
+  return exclTitles.has(norm(s.title));
+}
+function renderChips() {
+  document.getElementById('excl-count').textContent = exclDisplay.length + ' titles';
+  document.getElementById('excl-chips').innerHTML = exclDisplay.map(t =>
+    `<span class="chip">${esc(t)}<span class="rm" onclick="removeTitle('${norm(t).replace(/'/g,"\\'")}')">×</span></span>`
+  ).join('');
+}
+function removeTitle(n) { exclTitles.delete(n); exclDisplay = exclDisplay.filter(t => norm(t) !== n); renderChips(); }
+function addExcl() {
+  const i = document.getElementById('excl-input'); const v = i.value.trim();
+  if (!v) return;
+  exclTitles.add(norm(v));
+  if (!exclDisplay.find(t => norm(t) === norm(v))) exclDisplay.push(v);
+  exclDisplay.sort((a,b) => a.localeCompare(b));
+  i.value = ''; renderChips();
+}
+function addFromCard(title) {
+  exclTitles.add(norm(title));
+  if (!exclDisplay.find(t => norm(t) === norm(title))) exclDisplay.push(title);
+  exclDisplay.sort((a,b) => a.localeCompare(b));
+  renderChips(); fetchStories();
+}
+function toggleExcl() {
+  const b = document.getElementById('excl-body');
+  const t = document.getElementById('excl-tog');
+  b.classList.toggle('open');
+  t.textContent = b.classList.contains('open') ? '▲ hide' : '▼ show';
+}
+
+// ── Taste scoring ───────────────────────────────────────────────────
+function tasteScore(s) {
+  const tags = (s.tags||[]).map(t => t.toLowerCase());
+  let sc = 0;
+  for (const t of tags) {
+    if (TASTE.prefer.some(p => t.includes(p) || p.includes(t))) sc += 2;
+    if (TASTE.warn.some(w => t.includes(w) || w.includes(t))) sc -= 3;
+    if (TASTE.penalize.some(w => t.includes(w))) sc -= 5;
+  }
+  if ((s.rating||0) >= 4.2) sc += 2;
+  if ((s.rating||0) >= 4.5) sc += 2;
+  if ((s.followers||0) > 5000) sc += 1;
+  return sc;
+}
+function momentumLabel(s) {
+  const r = (s.followers||0) / Math.max(s.pages||1, 1);
+  if (r > 80) return 'blazing — readers hook fast';
+  if (r > 40) return 'strong pull';
+  if ((s.rating||0) >= 4.4 && (s.followers||0) < 3000) return 'hidden gem radar';
+  return null;
+}
+
+// ── Rendering ───────────────────────────────────────────────────────
+function fmt(n) { if (!n) return '—'; if (n>=1e6) return (n/1e6).toFixed(1)+'M'; if (n>=1e3) return Math.round(n/1e3)+'K'; return String(n); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderCard(s, ag) {
+  const ts = tasteScore(s); const hot = ts >= 4; const mom = momentumLabel(s);
+  const activePrefTags = ag.flatMap(g => GENRE_TAGS[g]||[]);
+  const tags = (s.tags||[]).map(t => {
+    const tl = t.toLowerCase();
+    const isM = activePrefTags.some(p => tl.includes(p) || p.includes(tl));
+    const isW = TASTE.warn.some(w => tl.includes(w) || w.includes(tl));
+    return `<span class="tag ${isM?'match':isW?'warn':''}">${esc(t)}</span>`;
+  }).slice(0,8).join('');
+  const url = s.url || (s.id ? `https://www.royalroad.com/fiction/${s.id}` : '#');
+  const stat = s.status==='Completed' ? 'complete' : s.status==='Hiatus' ? 'on hiatus' : 'ongoing';
+  return `<div class="story-card${hot?' match':''}">
+    <div class="story-top">
+      <div class="story-title"><a href="${esc(url)}" target="_blank">${esc(s.title)}</a></div>
+      <span class="badge ${hot?'hot':'warm'}">${hot?'★ Match':'Candidate'}</span>
+    </div>
+    <div class="story-meta">by ${esc(s.author||'Unknown')} · ${stat}${s.chapters?' · '+s.chapters+' ch':''}${s.pages?' · '+(s.pages).toLocaleString()+' pp':''}</div>
+    <div class="story-tags">${tags}</div>
+    <div class="story-desc">${esc((s.description||'').replace(/<[^>]+>/g,'').slice(0,320))}</div>
+    <div class="stats-row">
+      <div class="stat">Rating <span>${s.rating ? Number(s.rating).toFixed(2) : '—'}</span></div>
+      <div class="stat">Followers <span>${fmt(s.followers)}</span></div>
+      ${s.views ? `<div class="stat">Views <span>${fmt(s.views)}</span></div>` : ''}
+    </div>
+    ${mom ? `<div class="momentum">${mom}</div>` : ''}
+    <button class="card-btn" onclick="addFromCard(${JSON.stringify(s.title)})">× not interested</button>
+  </div>`;
+}
+
+function getGenres() { return [...document.querySelectorAll('.pill.active')].map(p => p.dataset.genre); }
+
+// ── Prompt ──────────────────────────────────────────────────────────
+function buildPrompt(ag, mode, filter) {
+  const genreDesc = {
+    apocalypse: 'system apocalypse, system drop, post-apocalyptic LitRPG',
+    cultivation: 'cultivation, xianxia, wuxia, qi cultivation, eastern fantasy',
+    isekai:      'isekai, portal fantasy, reincarnation to another world',
+    progression: 'progression fantasy, power fantasy, leveling up',
+    dungeon:     'dungeon core, dungeon diving',
+    litrpg:      'LitRPG, GameLit, RPG game mechanics'
+  };
+  const modeDesc = {
+    trending: 'currently trending on Royal Road right now — high weekly views and follower growth',
+    rising:   'rising stars — new or recent stories gaining followers fast this month',
+    new_high: 'recently published stories (last 6 months) with ratings above 4.0',
+    hidden:   'hidden gems — strong rating (4.0+) but under 5000 followers, underrated finds',
+    completed:'completed stories with strong ratings and substantial page count'
+  }[mode];
+  const filterNote = {ongoing:'Return ongoing stories only.',complete:'Return completed stories only.',no_hiatus:'Exclude stories on hiatus.',all:''}[filter]||'';
+  const topExclude = [
+    'He Who Fights With Monsters','Dungeon Crawler Carl','The Primal Hunter','Defiance of the Fall',
+    'The Beginning After The End','Mother of Learning','The Legend of Randidly Ghosthound',
+    'Azarinth Healer','Super Supportive','Salvos','Worm','Shadow Slave','Mark of the Fool',
+    'The Path of Ascension','System Change','Delve','Forge of Destiny','Beneath the Dragoneye Moons',
+    'A Journey of Black and Red','Peculiar Soul','Virtuous Sons','Vigor Mortis','Path of the Berserker',
+    'Cataclysm Rising','All Jobs and Classes','Crimson Eternal','Sword Saint\'s Reincarnation',
+    'The Academy\'s Immortal Professor','The Greatest Archmage','Second Life Ranker'
+  ].join(', ');
+  return `Find 6 Royal Road stories from your training knowledge that match this reader's taste.
+
+GENRES: ${ag.map(g => genreDesc[g]||g).join('; ')}
+MODE: ${modeDesc}
+${filterNote}
+TASTE: OP MC, dark/gritty, hard progression, anti-heroes. Avoid: harem, romance, YA-soft, slice of life.
+EXCLUDE (reader has already read these, do not return them): ${topExclude}.
+
+Return ONLY a raw JSON array, no markdown, no backticks. Each item:
+{"title":"","author":"","id":0,"rating":0.0,"followers":0,"chapters":0,"status":"Ongoing","tags":[],"description":"one sentence max","url":""}
+
+Keep descriptions to one short sentence. Return exactly 6 stories.
+}
+
+// ── Fetch ───────────────────────────────────────────────────────────
+async function fetchStories() {
+  const btn      = document.getElementById('fetch-btn');
+  const statusEl = document.getElementById('status');
+  const errArea  = document.getElementById('error-area');
+  const container= document.getElementById('stories-container');
+  const mode     = document.getElementById('mode-select').value;
+  const filter   = document.getElementById('filter-select').value;
+  const ag       = getGenres();
+  const exclOn   = document.getElementById('excl-on').checked;
+
+  if (!ag.length) { statusEl.textContent = 'Select at least one genre.'; return; }
+  if (!API_KEY)   { statusEl.textContent = 'No API key set.'; return; }
+
+  btn.disabled = true;
+  statusEl.textContent = 'Searching Royal Road via AI web search… (10-20s)';
+  errArea.innerHTML = '';
+  container.innerHTML = `<div class="loading-pulse">${Array(5).fill('<div class="pulse-card"></div>').join('')}</div>`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4000,
+        
+        system: 'You are a Royal Road story expert with deep knowledge of the platform catalog through 2025. Return ONLY a valid JSON array — no markdown, no backticks, no other text.',
+        messages: [{ role: 'user', content: buildPrompt(ag, mode, filter) }]
+      })
+    });
+
+    const rawText = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${rawText.slice(0, 500)}`);
+
+    let data;
+    try { data = JSON.parse(rawText); }
+    catch(e) { throw new Error('Response not JSON:\n' + rawText.slice(0, 400)); }
+
+    const textBlocks = (data.content||[]).filter(b => b.type === 'text').map(b => b.text).join('');
+    if (!textBlocks) throw new Error('No text block in response.\nStop reason: ' + data.stop_reason + '\nBlocks: ' + JSON.stringify((data.content||[]).map(b=>b.type)));
+
+    let stories;
+    try {
+      const clean = textBlocks.replace(/```json|```/gi,'').trim();
+      const arrMatch = clean.match(/\[[\s\S]*\]/);
+      stories = JSON.parse(arrMatch ? arrMatch[0] : clean);
+    } catch(e) {
+      // Fallback: extract any complete objects from truncated JSON
+      const objMatches = clean.match(/\{[^{}]*"title"[^{}]*\}/g);
+      if (objMatches && objMatches.length) {
+        stories = objMatches.map(o => { try { return JSON.parse(o); } catch(e) { return null; } }).filter(Boolean);
+        if (stories.length) { /* salvaged */ }
+        else throw new Error('JSON parse failed.\nRaw text:\n' + textBlocks.slice(0, 500));
+      } else {
+        throw new Error('JSON parse failed.\nRaw text:\n' + textBlocks.slice(0, 500));
+      }
+    }
+
+    if (!Array.isArray(stories) || !stories.length) throw new Error('Empty result:\n' + JSON.stringify(stories).slice(0,200));
+
+    if (filter === 'complete') stories = stories.filter(s => s.status === 'Completed');
+    else if (filter === 'ongoing') stories = stories.filter(s => s.status === 'Ongoing');
+    else if (filter === 'no_hiatus') stories = stories.filter(s => s.status !== 'Hiatus');
+    stories = stories.filter(s => (s.rating||0) >= TASTE.minRating);
+
+    let hidden = 0;
+    if (exclOn) { const b = stories.length; stories = stories.filter(s => !isExcluded(s)); hidden = b - stories.length; }
+    stories.sort((a,b) => tasteScore(b) - tasteScore(a));
+
+    const top  = stories.filter(s => tasteScore(s) >= 4);
+    const rest = stories.filter(s => tasteScore(s) <  4);
+    const note = exclOn && hidden > 0 ? ` · ${hidden} already-read hidden` : '';
+    statusEl.textContent = `${stories.length} stories — ${top.length} strong matches${note}.`;
+    btn.disabled = false;
+
+    if (!stories.length) {
+      container.innerHTML = '<div class="empty">No stories passed filters. Try different genres or disable exclusions.</div>';
+      return;
+    }
+
+    let html = '';
+    if (top.length)  html += top.map(s => renderCard(s, ag)).join('');
+    if (rest.length) { html += `<div class="divider">— candidates —</div>`; html += rest.map(s => renderCard(s, ag)).join(''); }
+    container.innerHTML = html;
+
+  } catch(e) {
+    statusEl.textContent = 'Search failed.';
+    errArea.innerHTML = `<div class="error-box">${esc(e.message)}</div>`;
+    container.innerHTML = '<div class="empty">See error above.</div>';
+    btn.disabled = false;
+    console.error(e);
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => p.classList.toggle('active')));
+renderChips();
+</script>
+</body>
+</html>
